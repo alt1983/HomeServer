@@ -8,15 +8,18 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 public class Connector implements Runnable {
 
     private List<String> validPaths;
     private final Socket socket;
+    private Map<String, Map<String, Handler>> handlers;
 
-    public Connector(Socket socket, List<String> validPaths) {
+    public Connector(Socket socket, List<String> validPaths, Map<String, Map<String, Handler>> handlers) {
         this.validPaths = validPaths;
         this.socket = socket;
+        this.handlers = handlers;
     }
 
     @Override
@@ -29,15 +32,25 @@ public class Connector implements Runnable {
                 // read only request line for simplicity
                 // must be in form GET /path HTTP/1.1
                 final var requestLine = in.readLine();
-                System.out.println(requestLine);
                 final var parts = requestLine.split(" ");
 
                 if (parts.length != 3) {
                     // just close socket
                     return;
                 }
-
+                final var method = parts[0];
                 final var path = parts[1];
+                final var body = requestLine;
+                Request request = new Request(method, path, body);
+
+                if (handlers.get(method) != null) {
+                    if ((handlers.get(method)).get(path) != null) {
+                        (handlers.get(method)).get(path).handle(request, new BufferedOutputStream(socket.getOutputStream()));
+                        return;
+                    }
+                }
+
+
                 if (!validPaths.contains(path)) {
                     out.write((
                             "HTTP/1.1 404 Not Found\r\n" +
@@ -68,7 +81,6 @@ public class Connector implements Runnable {
                     ).getBytes());
                     out.write(content);
                     out.flush();
-                    //continue;
                     return;
                 }
 

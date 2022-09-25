@@ -1,12 +1,19 @@
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
+
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,16 +39,23 @@ public class Connector implements Runnable {
                 // read only request line for simplicity
                 // must be in form GET /path HTTP/1.1
                 final var requestLine = in.readLine();
-                final var parts = requestLine.split(" ");
+                String[] parts = null;
+                if (requestLine != null) {
+                    parts = requestLine.split(" ");
+                } else {
+                    return;
+                }
 
                 if (parts.length != 3) {
                     // just close socket
                     return;
                 }
                 final var method = parts[0];
-                final var path = parts[1];
+                final var query = parts[1];
+                final var fullpath = parts[1].split("\\?");
+                final var path = fullpath[0];
                 final var body = requestLine;
-                Request request = new Request(method, path, body);
+                Request request = new Request(method, path, body, query);
 
                 if (handlers.get(method) != null) {
                     if ((handlers.get(method)).get(path) != null) {

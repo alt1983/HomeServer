@@ -21,6 +21,8 @@ public class Server {
         handlers = new ConcurrentHashMap<>();
     }
 
+
+
     public void addHandler(String method, String path, Handler handler) {
         Map<String, Handler> element = new HashMap<>();
         element.put(path, handler);

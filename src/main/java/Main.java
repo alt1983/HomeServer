@@ -14,7 +14,7 @@ public class Main {
         server.addHandler("GET", "/messages", new Handler() {
             public void handle(Request request, BufferedOutputStream responseStream) {
                 // TODO: handlers code
-                System.out.println(request);
+                System.out.println(request.getQueryParams());
             }
         });
         server.addHandler("POST", "/messages", new Handler() {
